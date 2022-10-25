@@ -21,8 +21,7 @@ const TIANHE_LOCATION_URL = "https://api.n2yo.com/rest/v1/satellite/positions/48
 
 /******/
 
-import Cache from './lib/cache';
-
+const Cache = importModule('Cache');
 const cache = new Cache("termiWidgetCache");
 const data = await fetchData();
 const widget = createWidget(data);
@@ -81,9 +80,9 @@ function createWidget(data) {
   // plexLine.textColor = new Color("#ffa7d3")
   // plexLine.font = new Font("Menlo", 11)
 
-  const satLine = leftStack.addText(`[🛰] ${data.satPass}`);
-  satLine.textColor = new Color("#ffcc66")
-  satLine.font = new Font("Menlo", 11)
+  // const satLine = leftStack.addText(`[🛰] ${data.satPass}`);
+  // satLine.textColor = new Color("#ffcc66")
+  // satLine.font = new Font("Menlo", 11)
 
   stack.addSpacer();
   const rightStack = stack.addStack();
@@ -114,13 +113,13 @@ async function fetchData() {
   const weather = await fetchWeather();
   // const plex = await fetchPlex();
   // const home = await fetchHome();
-  const satPass = await fetchNextSatPass();
+  // const satPass = await fetchNextSatPass();
   
   return {
     weather,
     // plex,
     // home,
-    satPass,
+    // satPass,
   }
 }
 
@@ -146,17 +145,17 @@ async function fetchWeather() {
     location = DEFAULT_LOCATION;
   }
   const address = await Location.reverseGeocode(location.latitude, location.longitude);
-  const url = "https://api.openweathermap.org/data/2.5/onecall?lat=" + location.latitude + "&lon=" + location.longitude + "&exclude=minutely,hourly,alerts&units=metric&lang=en&appid=" + WEATHER_API_KEY;
+  const url = "https://api.openweathermap.org/data/2.5/weather?lat=" + location.latitude + "&lon=" + location.longitude + "units=metric&lang=en&appid=" + WEATHER_API_KEY;
   const data = await fetchJson(`weather_${address[0].locality}`, url);
 
   return {
     location: address[0].locality,
-    icon: getWeatherEmoji(data.current.weather[0].id, ((new Date()).getTime() / 1000) >= data.current.sunset),
-    description: data.current.weather[0].main,
-    temperature: Math.round(data.current.temp),
-    wind: Math.round(data.current.wind_speed),
-    high: Math.round(data.daily[0].temp.max),
-    low: Math.round(data.daily[0].temp.min),
+    icon: getWeatherEmoji(data.weather[0].id, ((new Date()).getTime() / 1000) >= data.sys.sunset),
+    description: data.weather[0].main,
+    temperature: Math.round(data.main.temp),
+    wind: Math.round(data.wind.speed),
+    high: Math.round(data.main.temp_max),
+    low: Math.round(data.main.temp_min),
   }
 }
 
