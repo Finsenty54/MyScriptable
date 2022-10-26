@@ -177,7 +177,7 @@ async function fetchHeFengWeather() {
   if (!location) {
     location = DEFAULT_LOCATION;
   }
-  const url = "https://devapi.heweather.net/v7/weather/now?location="+location.longitude+","+location.latitude+"&key="+ WEATHER_HEFENG_API_KEY+"&lang=zh-cn";
+  const url = "https://devapi.heweather.net/v7/weather/3d?location="+location.longitude+","+location.latitude+"&key="+ WEATHER_HEFENG_API_KEY+"&lang=zh-cn";
   const data = await fetchJson(`hefengweather`, url);
 
   return {
