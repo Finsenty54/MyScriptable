@@ -66,13 +66,13 @@ function createWidget(data) {
   locationLine.textColor = new Color("#7dbbae")
   locationLine.font = new Font("Menlo", 11)
   
-  const Progress = widget.addText(`[⏳]${renderYearProgress()} YearProgress`)
+  const Progress = leftStack.addText(`[⏳]${renderYearProgress()} YearProgress`)
   Progress.textColor = new Color('#f19c65')
   Progress.font = new Font('Menlo', 11)
 
-  const locationTianGong = leftStack.addText(`[️️🛰] CSS位于: ${data.tiangong.location} 上空`)
-  locationLine.textColor = new Color("#c6ffdd")
-  locationLine.font = new Font("Menlo", 11)
+//   const locationTianGong = leftStack.addText(`[️️🛰] CSS位于: ${data.tiangong.location} 上空`)
+//   locationTianGong.textColor = new Color("#c6ffdd")
+//   locationTianGong.font = new Font("Menlo", 11)
 
   stack.addSpacer();
   const rightStack = stack.addStack();
@@ -89,7 +89,7 @@ function createWidget(data) {
 
   let nextRefresh = Date.now() + 1000 * 60 * parseInt(refreshInterval)// add 30 min to now
   console.log('刷新时间戳==》' + nextRefresh)
-  widget.refreshAfterDate = new Date(nextRefresh) //下次刷新时间
+  w.refreshAfterDate = new Date(nextRefresh) //下次刷新时间
   console.log('刷新时间==》' + new Date(nextRefresh))
 
   return w
@@ -108,12 +108,12 @@ function addWeatherLine(w, text, size, bold) {
 async function fetchData() {
   const weather = await fetchWeather();
   const hefengweather = await fetchHeFengWeather();
-  const tiangong = await fetchTianGong();
+//   const tiangong = await fetchTianGong();
   
   return {
     weather,
     hefengweather,
-    tiangong,
+//     tiangong,
   }
 }
 
@@ -153,7 +153,7 @@ async function fetchWeather() {
     location = DEFAULT_LOCATION;
   }
   const address = await Location.reverseGeocode(location.latitude, location.longitude);
-  const url = "https://api.openweathermap.org/data/2.5/weather?lat=" + location.latitude + "&lon=" + location.longitude + "units=metric&lang=en&appid=" + WEATHER_API_KEY;
+  const url = "https://api.openweathermap.org/data/2.5/weather?lat=" + location.latitude + "&lon=" + location.longitude + "&units=metric&lang=en&appid=" + WEATHER_API_KEY;
   const data = await fetchJson(`weather`, url);
 
   return {
@@ -206,7 +206,7 @@ async function fetchTianGong() {
     location = DEFAULT_LOCATION;
   }
   const url= "https://api.n2yo.com/rest/v1/satellite/positions/48274/"+location.latitude+"/"+location.longitude+"/0/2/&apiKey="+TIANHE_LOCATION_API_KEY;
-  const data = await fetchJson('tianhe-l.json', url);
+  const data = await fetchJson('tianhe', url);
   
   const address = await Location.reverseGeocode(data.positions[0].satlatitude, data.positions[0].satlongitude);
   return {
