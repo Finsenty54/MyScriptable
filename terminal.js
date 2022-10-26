@@ -15,7 +15,7 @@ const DEFAULT_LOCATION = {
   latitude: 30.31323, 
   longitude: 120.34193
 };
-const refreshInterval = 30   //刷新间隔  时间单位：分钟
+// const refreshInterval = 30   //刷新间隔  时间单位：分钟
 
 /******/
 
@@ -40,8 +40,8 @@ function createWidget(data) {
 
   const leftStack = stack.addStack();
   leftStack.layoutVertically();
-  leftStack.spacing = 6; //总共6行
-  leftStack.size = new Size(200, 0);
+  leftStack.spacing = 6; //元素之间的间距
+  leftStack.size = new Size(200, 0); //stack的大小 ：宽*长
 
   const time = new Date()
   const dfTime = new DateFormatter()
@@ -66,13 +66,13 @@ function createWidget(data) {
   locationLine.textColor = new Color("#7dbbae")
   locationLine.font = new Font("Menlo", 11)
   
-  const Progress = leftStack.addText(`[⏳]${renderYearProgress()} YearProgress`)
+  const Progress = leftStack.addText(`[⏳] ${renderYearProgress()}`)
   Progress.textColor = new Color('#f19c65')
   Progress.font = new Font('Menlo', 11)
 
-//   const locationTianGong = leftStack.addText(`[️️🛰] CSS位于: ${data.tiangong.location} 上空`)
-//   locationTianGong.textColor = new Color("#c6ffdd")
-//   locationTianGong.font = new Font("Menlo", 11)
+  const locationTianGong = leftStack.addText(`[️️🛰] CSS: ${data.tiangong.location}上空`)
+  locationTianGong.textColor = new Color("#c6ffdd")
+  locationTianGong.font = new Font("Menlo", 11)
 
   stack.addSpacer();
   const rightStack = stack.addStack();
@@ -82,15 +82,15 @@ function createWidget(data) {
 
   addWeatherLine(rightStack, data.weather.icon, 32);
   addWeatherLine(rightStack, `${data.weather.description}, ${data.weather.temperature}℃`, 12, true);
-  addWeatherLine(rightStack, `${data.hefengweather.low}℃ -> ${data.hefengweather.high}℃`);
-  addWeatherLine(rightStack, `Sunset: ${data.hefengweather.sunset}`);
-  addWeatherLine(rightStack, `tomW: ${data.hefengweather.tomorrowDay} -> ${data.hefengweather.tomorrowNight}`);
-  addWeatherLine(rightStack, `tomT: ${data.hefengweather.tomorrowTempMin}℃ -> ${data.hefengweather.tomorrowTempMax}℃`);
+  addWeatherLine(rightStack, `${data.hefengweather.low}℃->${data.hefengweather.high}℃`);
+  addWeatherLine(rightStack, `Sunset, ${data.hefengweather.sunset}`);
+  addWeatherLine(rightStack, `t:${data.hefengweather.tomorrowDay}->${data.hefengweather.tomorrowNight}`);
+  addWeatherLine(rightStack, `t:${data.hefengweather.tomorrowTempMin}℃->${data.hefengweather.tomorrowTempMax}℃`);
 
-  let nextRefresh = Date.now() + 1000 * 60 * parseInt(refreshInterval)// add 30 min to now
-  console.log('刷新时间戳==》' + nextRefresh)
-  w.refreshAfterDate = new Date(nextRefresh) //下次刷新时间
-  console.log('刷新时间==》' + new Date(nextRefresh))
+  // let nextRefresh = Date.now() + 1000 * 60 * parseInt(refreshInterval)// add 30 min to now
+  // console.log('刷新时间戳==》' + nextRefresh)
+  // w.refreshAfterDate = new Date(nextRefresh) //下次刷新时间
+  // console.log('刷新时间==》' + new Date(nextRefresh))
 
   return w
 }
@@ -108,12 +108,12 @@ function addWeatherLine(w, text, size, bold) {
 async function fetchData() {
   const weather = await fetchWeather();
   const hefengweather = await fetchHeFengWeather();
-//   const tiangong = await fetchTianGong();
+  const tiangong = await fetchTianGong();
   
   return {
     weather,
     hefengweather,
-//     tiangong,
+    tiangong,
   }
 }
 
@@ -154,7 +154,7 @@ async function fetchWeather() {
   }
   const address = await Location.reverseGeocode(location.latitude, location.longitude);
   const url = "https://api.openweathermap.org/data/2.5/weather?lat=" + location.latitude + "&lon=" + location.longitude + "&units=metric&lang=en&appid=" + WEATHER_API_KEY;
-  const data = await fetchJson(`weather`, url);
+  const data = await fetchJson(`weather`, url, 5);
 
   return {
     location: address[0].locality,
@@ -178,7 +178,7 @@ async function fetchHeFengWeather() {
     location = DEFAULT_LOCATION;
   }
   const url = "https://devapi.heweather.net/v7/weather/3d?location="+location.longitude+","+location.latitude+"&key="+ WEATHER_HEFENG_API_KEY+"&lang=zh-cn";
-  const data = await fetchJson(`hefengweather`, url);
+  const data = await fetchJson(`hefengweather`, url, 1440);
 
   return {
     high: Math.round(data.daily[0].tempMax),
@@ -206,16 +206,16 @@ async function fetchTianGong() {
     location = DEFAULT_LOCATION;
   }
   const url= "https://api.n2yo.com/rest/v1/satellite/positions/48274/"+location.latitude+"/"+location.longitude+"/0/2/&apiKey="+TIANHE_LOCATION_API_KEY;
-  const data = await fetchJson('tianhe', url);
+  const data = await fetchJson('tianhe', url, 5);
   
-  const address = await Location.reverseGeocode(data.positions[0].satlatitude, data.positions[0].satlongitude);
+  const address = await Location.reverseGeocode(parseFloat(data.positions[0].satlatitude), parseFloat(data.positions[0].satlongitude));
   return {
     location: address[0].locality,
   }
 }
 
-async function fetchJson(key, url, headers) {
-  const cached = await cache.read(key, 5); //超过5分钟获取一遍数据，不然使用内存中的数据
+async function fetchJson(key, url, delay, headers) {
+  const cached = await cache.read(key, delay); //超过delay分钟获取一遍数据，不然使用内存中的数据
   if (cached) {
     return cached;
   }
@@ -229,7 +229,7 @@ async function fetchJson(key, url, headers) {
     return resp;
   } catch (error) {
     try {
-      return cache.read(key, 5);
+      return cache.read(key, delay);
     } catch (error) {
       console.log(`Couldn't fetch ${url}`);
     }
