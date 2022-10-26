@@ -11,6 +11,9 @@ const user = "Zentreisender";
 const WEATHER_API_KEY = "6a672f01b829d5ffd5e70c98679a907a";
 const WEATHER_HEFENG_API_KEY = "857323ba420d4dd896fdde37fd849409"; //和风API key, https://dev.heweather.com/
 const TIANHE_LOCATION_API_KEY = "ECZXHE-MFJED3-CHVTGJ-4Y1T"; //天宫位置API key, n2yo.com
+// Cache keys and default location
+const CACHE_KEY_LAST_UPDATED = 'last_updated';
+
 const DEFAULT_LOCATION = {
   latitude: 30.31323, 
   longitude: 120.34193
@@ -18,6 +21,8 @@ const DEFAULT_LOCATION = {
 // const refreshInterval = 30   //刷新间隔  时间单位：分钟
 
 /******/
+// Get current date and time
+const updatedAt = new Date().toLocaleString();
 
 const Cache = importModule('Cache');
 const cache = new Cache("termiWidgetCache");
@@ -70,9 +75,15 @@ function createWidget(data) {
   Progress.textColor = new Color('#f19c65')
   Progress.font = new Font('Menlo', 11)
 
-  const locationTianGong = leftStack.addText(`[️️🛰] CSS: ${data.tiangong.location}上空`)
-  locationTianGong.textColor = new Color("#c6ffdd")
-  locationTianGong.font = new Font("Menlo", 11)
+  //const locationTianGong = leftStack.addText(`[️️🛰] CSS: ${data.tiangong.location}上空`)
+  //locationTianGong.textColor = new Color("#c6ffdd")
+  //locationTianGong.font = new Font("Menlo", 11)
+
+  // Updated time
+  const updatedTime = leftStack.addText('Last updated:' + " " + updatedAt);
+  updatedTime.textColor = Color.white();
+  updatedTime.textOpacity = 0.7;
+  updatedTime.font = new Font("Menlo", 7);
 
   stack.addSpacer();
   const rightStack = stack.addStack();
@@ -82,10 +93,10 @@ function createWidget(data) {
 
   addWeatherLine(rightStack, data.weather.icon, 32);
   addWeatherLine(rightStack, `${data.weather.description}, ${data.weather.temperature}℃`, 12, true);
-  addWeatherLine(rightStack, `${data.hefengweather.low}℃->${data.hefengweather.high}℃`);
+  addWeatherLine(rightStack, `${data.hefengweather.low}℃ -> ${data.hefengweather.high}℃`);
   addWeatherLine(rightStack, `Sunset, ${data.hefengweather.sunset}`);
-  addWeatherLine(rightStack, `t:${data.hefengweather.tomorrowDay}->${data.hefengweather.tomorrowNight}`);
-  addWeatherLine(rightStack, `t:${data.hefengweather.tomorrowTempMin}℃->${data.hefengweather.tomorrowTempMax}℃`);
+  addWeatherLine(rightStack, `t: ${data.hefengweather.tomorrowDay} -> ${data.hefengweather.tomorrowNight}`);
+  addWeatherLine(rightStack, `t: ${data.hefengweather.tomorrowTempMin}℃ -> ${data.hefengweather.tomorrowTempMax}℃`);
 
   // let nextRefresh = Date.now() + 1000 * 60 * parseInt(refreshInterval)// add 30 min to now
   // console.log('刷新时间戳==》' + nextRefresh)
@@ -108,27 +119,29 @@ function addWeatherLine(w, text, size, bold) {
 async function fetchData() {
   const weather = await fetchWeather();
   const hefengweather = await fetchHeFengWeather();
-  const tiangong = await fetchTianGong();
+  //const tiangong = await fetchTianGong();
+
+  // Get last data update time (and set)
+  const lastUpdated = await getLastUpdated();
+  cache.write(CACHE_KEY_LAST_UPDATED, new Date().getTime());
   
   return {
     weather,
     hefengweather,
-    tiangong,
+    //tiangong,
+    lastUpdated,
   }
 }
 
 function renderProgress(progress) {
-  const used = '▓'.repeat(Math.floor(progress * 8))
-  const left = '░'.repeat(8 - used.length)
-  return `${used}${left} ${Math.floor(progress * 100)}%`
+  const used = '#'.repeat(Math.floor(progress * 8))
+  const left = '.'.repeat(8 - used.length)
+  return `[${used}${left}] ${Math.round(progress * 100)}%`
 }
 
 function renderBattery() {
   const batteryLevel = Device.batteryLevel()
-  const juice = "#".repeat(Math.floor(batteryLevel * 8))
-  const used = ".".repeat(8 - juice.length)
-  const batteryAscii = `[${juice}${used}] ${Math.round(batteryLevel * 100)}%`
-  return batteryAscii
+  return renderProgress(batteryLevel)
 }
 
 function renderYearProgress() {
@@ -208,7 +221,7 @@ async function fetchTianGong() {
   const url= "https://api.n2yo.com/rest/v1/satellite/positions/48274/"+location.latitude+"/"+location.longitude+"/0/2/&apiKey="+TIANHE_LOCATION_API_KEY;
   const data = await fetchJson('tianhe', url, 5);
   
-  const address = await Location.reverseGeocode(parseFloat(data.positions[0].satlatitude), parseFloat(data.positions[0].satlongitude));
+  const address = await Location.reverseGeocode(parseFloat(data.positions[0].satlatitude), parseFloat(data.positions[0].satlongitude)); //这里有问题
   return {
     location: address[0].locality,
   }
@@ -234,6 +247,20 @@ async function fetchJson(key, url, delay, headers) {
       console.log(`Couldn't fetch ${url}`);
     }
   }
+}
+
+/*
+ * Get the last updated timestamp from the Cache.
+ */
+async function getLastUpdated() {
+  let cachedLastUpdated = await cache.read(CACHE_KEY_LAST_UPDATED);
+
+  if (!cachedLastUpdated) {
+    cachedLastUpdated = new Date().getTime();
+    cache.write(CACHE_KEY_LAST_UPDATED, cachedLastUpdated);
+  }
+
+  return cachedLastUpdated;
 }
 
 function getWeatherEmoji(code, isNight) {
