@@ -146,7 +146,7 @@ async function fetchWeather() {
   }
   const address = await Location.reverseGeocode(location.latitude, location.longitude);
   const url = "https://api.openweathermap.org/data/2.5/weather?lat=" + location.latitude + "&lon=" + location.longitude + "units=metric&lang=en&appid=" + WEATHER_API_KEY;
-  const data = await fetchJson(`weather_${address[0].locality}`, url);
+  const data = await fetchJson(`weather`, url);
 
   return {
     location: address[0].locality,
