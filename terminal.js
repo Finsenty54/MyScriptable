@@ -15,7 +15,7 @@ const TIANHE_LOCATION_API_KEY = "ECZXHE-MFJED3-CHVTGJ-4Y1T"; //天宫位置API k
 const CACHE_KEY_LAST_UPDATED = 'last_updated';
 
 const DEFAULT_LOCATION = {
-  latitude: 30.31323, 
+  latitude: 30.31323,
   longitude: 120.34193
 };
 // const refreshInterval = 30   //刷新间隔  时间单位：分钟
@@ -58,19 +58,19 @@ function createWidget(data) {
   firstLine.textColor = Color.white()
   firstLine.textOpacity = 0.7
   firstLine.font = new Font("Menlo", 11)
-  
+
   const timeLine = leftStack.addText(`[🗓] ${dfTime.string(time)}`)
   timeLine.textColor = Color.white()
   timeLine.font = new Font("Menlo", 11)
-  
+
   const batteryLine = leftStack.addText(`[${Device.isCharging() ? '⚡️' : '🔋'}] ${renderBattery()}`)
   batteryLine.textColor = new Color("#6ef2ae")
   batteryLine.font = new Font("Menlo", 11)
-  
+
   const locationLine = leftStack.addText(`[️️📍] Location: ${data.weather.location}`)
   locationLine.textColor = new Color("#7dbbae")
   locationLine.font = new Font("Menlo", 11)
-  
+
   const Progress = leftStack.addText(`[⏳] ${renderYearProgress()}`)
   Progress.textColor = new Color('#f19c65')
   Progress.font = new Font('Menlo', 11)
@@ -124,7 +124,7 @@ async function fetchData() {
   // Get last data update time (and set)
   const lastUpdated = await getLastUpdated();
   cache.write(CACHE_KEY_LAST_UPDATED, new Date().getTime());
-  
+
   return {
     weather,
     hefengweather,
@@ -158,7 +158,7 @@ async function fetchWeather() {
     try {
       Location.setAccuracyToThreeKilometers();
       location = await Location.current();
-    } catch(error) {
+    } catch (error) {
       location = await cache.read('location');
     }
   }
@@ -183,14 +183,14 @@ async function fetchHeFengWeather() {
     try {
       Location.setAccuracyToThreeKilometers();
       location = await Location.current();
-    } catch(error) {
+    } catch (error) {
       location = await cache.read('location');
     }
   }
   if (!location) {
     location = DEFAULT_LOCATION;
   }
-  const url = "https://devapi.heweather.net/v7/weather/3d?location="+location.longitude+","+location.latitude+"&key="+ WEATHER_HEFENG_API_KEY+"&lang=zh-cn";
+  const url = "https://devapi.heweather.net/v7/weather/3d?location=" + location.longitude + "," + location.latitude + "&key=" + WEATHER_HEFENG_API_KEY + "&lang=zh-cn";
   const data = await fetchJson(`hefengweather`, url, 1440);
 
   return {
@@ -211,19 +211,85 @@ async function fetchTianGong() {
     try {
       Location.setAccuracyToThreeKilometers();
       location = await Location.current();
-    } catch(error) {
+    } catch (error) {
       location = await cache.read('location');
     }
   }
   if (!location) {
     location = DEFAULT_LOCATION;
   }
-  const url= "https://api.n2yo.com/rest/v1/satellite/positions/48274/"+location.latitude+"/"+location.longitude+"/0/2/&apiKey="+TIANHE_LOCATION_API_KEY;
-  const data = await fetchJson('tianhe', url, 5);
-  
-  const address = await Location.reverseGeocode(parseFloat(data.positions[0].satlatitude), parseFloat(data.positions[0].satlongitude)); //这里有问题
-  return {
-    location: address[0].locality,
+  const url = "https://api.n2yo.com/rest/v1/satellite/positions/48274/" + location.latitude + "/" + location.longitude + "/0/2/&apiKey=" + TIANHE_LOCATION_API_KEY;
+  const data = await fetchJson('tianhe', url, 30);
+
+  const satlat = parseFloat(data.positions[0].satlatitude);
+  const satlon = parseFloat(data.positions[0].satlongitude);
+
+  if (satlat <= -60) {
+    return {
+      location: "Antarctica",
+    }
+  }
+
+  if (satlon >= -15) {
+    if (satlat >= 0 && satlon >= 45) {
+      return {
+        location: "Asia",
+      }
+    }
+    else if (satlat >= 30 && satlon <= 45) {
+      return {
+        location: "Europe",
+      }
+    }
+    else if (satlat <= 30 && satlon <= 45) {
+      return {
+        location: "Africa",
+      }
+    }
+    else if (satlat <= 0 && satlon >= 115 && satlon <= 155) {
+      if (satlat >= -45) {
+        return {
+          location: "Australia",
+        }
+      }
+      else{
+      return {
+        location: "南洋",
+      }
+    }
+    }
+    else if (satlat <= 0 && satlon >= 45 && satlon <= 115) {
+      return {
+        location: "印度洋",
+      }
+    }
+    else {
+      return {
+        location: "太平洋",
+      }
+    }
+  }
+  else {
+    if (satlat >=15 && satlat >= (-satlon - 90) && satlon <= -60) {
+      return {
+        location: "北美",
+      }
+    }
+    else if (satlat <= 15 && satlat >= -60 && satlon <= -30 && satlon <= -90) {
+      return {
+        location: "南美",
+      }
+    }
+    else if (satlat <= (-satlon - 90) && satlon <= -90) {
+      return {
+        location: "太平洋",
+      }
+    }
+    else {
+      return {
+        location: "大西洋",
+      }
+    }
   }
 }
 
@@ -271,30 +337,30 @@ function getWeatherEmoji(code, isNight) {
   } else if (code >= 600 && code < 700) {
     return "❄️"
   } else if (code == 711) {
-    return "🔥" 
+    return "🔥"
   } else if (code == 800) {
-    return isNight ? "🌕" : "☀️" 
+    return isNight ? "🌕" : "☀️"
   } else if (code == 801) {
-    return isNight ? "☁️" : "🌤"  
+    return isNight ? "☁️" : "🌤"
   } else if (code == 802) {
-    return isNight ? "☁️" : "⛅️"  
+    return isNight ? "☁️" : "⛅️"
   } else if (code == 803) {
-    return isNight ? "☁️" : "🌥" 
+    return isNight ? "☁️" : "🌥"
   } else if (code == 804) {
-    return "☁️"  
+    return "☁️"
   } else if (code == 900 || code == 962 || code == 781) {
-    return "🌪" 
+    return "🌪"
   } else if (code >= 700 && code < 800) {
-    return "🌫" 
+    return "🌫"
   } else if (code == 903) {
-    return "🥶"  
+    return "🥶"
   } else if (code == 904) {
-    return "🥵" 
+    return "🥵"
   } else if (code == 905 || code == 957) {
-    return "💨" 
+    return "💨"
   } else if (code == 906 || code == 958 || code == 959) {
-    return "🧊" 
+    return "🧊"
   } else {
-    return "❓" 
+    return "❓"
   }
 }
