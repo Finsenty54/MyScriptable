@@ -46,7 +46,7 @@ function createWidget(data) {
   const leftStack = stack.addStack();
   leftStack.layoutVertically();
   leftStack.spacing = 6; //元素之间的间距
-  leftStack.size = new Size(200, 0); //stack的大小 ：宽*长
+  //leftStack.size = new Size(200, 0); //stack的大小 ：宽*长
 
   const time = new Date()
   const dfTime = new DateFormatter()
@@ -54,7 +54,7 @@ function createWidget(data) {
   dfTime.useMediumDateStyle()
   dfTime.useNoTimeStyle()
 
-  const firstLine = leftStack.addText(`[🐮] ${user} ~$ now`)
+  const firstLine = leftStack.addText(`${user} ~$ now`)
   firstLine.textColor = Color.white()
   firstLine.textOpacity = 0.7
   firstLine.font = new Font("Menlo", 11)
@@ -75,9 +75,9 @@ function createWidget(data) {
   Progress.textColor = new Color('#f19c65')
   Progress.font = new Font('Menlo', 11)
 
-  //const locationTianGong = leftStack.addText(`[️️🛰] CSS: ${data.tiangong.location}上空`)
-  //locationTianGong.textColor = new Color("#c6ffdd")
-  //locationTianGong.font = new Font("Menlo", 11)
+  const locationTianGong = leftStack.addText(`[️️🛰] CSS: ${data.tiangong.location}上空`)
+  locationTianGong.textColor = new Color("#c6ffdd")
+  locationTianGong.font = new Font("Menlo", 11)
 
   // Updated time
   const updatedTime = leftStack.addText('Last updated:' + " " + updatedAt);
@@ -119,7 +119,7 @@ function addWeatherLine(w, text, size, bold) {
 async function fetchData() {
   const weather = await fetchWeather();
   const hefengweather = await fetchHeFengWeather();
-  //const tiangong = await fetchTianGong();
+  const tiangong = await fetchTianGong();
 
   // Get last data update time (and set)
   const lastUpdated = await getLastUpdated();
@@ -128,7 +128,7 @@ async function fetchData() {
   return {
     weather,
     hefengweather,
-    //tiangong,
+    tiangong,
     lastUpdated,
   }
 }
@@ -219,7 +219,7 @@ async function fetchTianGong() {
     location = DEFAULT_LOCATION;
   }
   const url = "https://api.n2yo.com/rest/v1/satellite/positions/48274/" + location.latitude + "/" + location.longitude + "/0/2/&apiKey=" + TIANHE_LOCATION_API_KEY;
-  const data = await fetchJson('tianhe', url, 30);
+  const data = await fetchJson('tianhe', url, 10);
 
   const satlat = parseFloat(data.positions[0].satlatitude);
   const satlon = parseFloat(data.positions[0].satlongitude);
