@@ -3,20 +3,20 @@
 // icon-color: deep-gray; icon-glyph: magic;
 
 // Change these to your usernames!
-const user = "Zentreisender";
+const user = "";
 
 // API PARAMETERS !important
 // WEATHER_API_KEY, you need an Open Weather API Key
 // You can get one for free at: https://home.openweathermap.org/api_keys (account needed).
-const WEATHER_API_KEY = "6a672f01b829d5ffd5e70c98679a907a";
-const WEATHER_HEFENG_API_KEY = "857323ba420d4dd896fdde37fd849409"; //和风API key, https://dev.heweather.com/
-const TIANHE_LOCATION_API_KEY = "ECZXHE-MFJED3-CHVTGJ-4Y1T"; //天宫位置API key, n2yo.com
+const WEATHER_API_KEY = "";
+const WEATHER_HEFENG_API_KEY = ""; //和风API key, https://dev.heweather.com/
+const TIANHE_LOCATION_API_KEY = ""; //天宫位置API key, n2yo.com
 // Cache keys and default location
 const CACHE_KEY_LAST_UPDATED = 'last_updated';
 
 const DEFAULT_LOCATION = {
-  latitude: 30.31323,
-  longitude: 120.34193
+  latitude: 11,
+  longitude: 11
 };
 // const refreshInterval = 30   //刷新间隔  时间单位：分钟
 
