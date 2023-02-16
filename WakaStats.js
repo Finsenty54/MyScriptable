@@ -25,8 +25,8 @@ const COLORS = {
 };
 
 // TODO: PLEASE SET THESE VALUES
-const YOURNAME = 'Fang Linan';
-const WAKAUSER = 'Zentreisender'; // Your wakatime username
+const YOURNAME = '';
+const WAKAUSER = ''; // Your wakatime username
 const refreshInterval = 720   //刷新间隔  时间单位：分钟
 
 /******************************************************************************
